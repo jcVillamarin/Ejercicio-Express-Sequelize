@@ -1,7 +1,8 @@
 const WebSocket = require("ws");
+const chat = require("./models/chat.schema");
 
 const clients = [];
-const messages = [];
+let messages = [];
 
 const wsConnection = (server) => {
   const wss = new WebSocket.Server({ server });
@@ -10,9 +11,16 @@ const wsConnection = (server) => {
     clients.push(ws);
     sendMessages();
 
-    ws.on("message", (message) => {
-      messages.push(message);
-      sendMessages();
+    ws.on("message", async (data) => {
+      try {
+        data = JSON.parse(data);
+        const resutl = await chat.saveMessage({ ...data, ts: Date.now() });
+        if (!resutl) return;
+        messages = await chat.getMessages();
+        sendMessages();
+      } catch (error) {
+        console.log(error);
+      }
     });
   });
 };
@@ -22,7 +30,7 @@ const sendMessages = () => {
 };
 
 const sendMessage = (message) => {
-  console.log(messages);
+  console.log(message);
   messages.push(message);
   sendMessages();
 };

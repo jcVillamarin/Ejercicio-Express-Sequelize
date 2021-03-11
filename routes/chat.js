@@ -1,7 +1,7 @@
 var express = require("express");
 var router = express.Router();
 var chat = require("../models/chat.schema");
-
+const webChat = require("../wslib");
 /* GET home page. */
 router.get("/api/messages", function (req, res, next) {
   res.send(chat.getMessages());
@@ -22,6 +22,7 @@ router.post("/api/messages", function (req, res, next) {
   const { error, value } = chat.validateMessage(msg);
   if (!error) {
     chat.saveMessage(value);
+    webChat.sendMessage(msg);
     res.send(value);
   } else {
     console.log(error);
@@ -34,7 +35,7 @@ router.put("/api/messages/:ts", function (req, res, next) {
   const msg = req.body;
   const { error, value } = chat.validateMessage({ ...msg, ts: ts });
   if (!error) {
-    const result = chat.updateMessage(msg, ts);
+    const result = chat.updateMessage(value, ts);
     if (result) res.send(result);
     else {
       res.statusCode = 404;
